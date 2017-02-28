@@ -92,4 +92,4 @@ ENV/
 .idea/
 
 #configs
-*config.json
+*config*.json

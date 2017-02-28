@@ -26,16 +26,3 @@ while True:
     time.sleep(ALIVE_DELAY_SEC)
     send_alive()
 
-
-
-
-
-
-    # for x in range(1,6):
-    #     time.sleep(1)
-    #     print(x)
-    #
-    # p.stop()
-    # p.set_mrl('http://ic4.101.ru:8000/p193366')
-    # p.play()
-    # pass
