@@ -8,8 +8,8 @@ VERBOSE_LEVEL = 0
 
 DEFAULT_URL = 'http://ic3.101.ru:8000/v3_1'
 
-DEBUG_REKLAMA_1 = "19:20:00"
-DEBUG_REKLAMA_2 = "19:22:00"
+DEBUG_REKLAMA_1 = "19:23:00"
+DEBUG_REKLAMA_2 = "20:27:30"
 
 
 def send_alive():
@@ -23,8 +23,8 @@ p.set_mrl(DEFAULT_URL)      # set main stream url
 p_r = i.media_player_new()  # player for reklama
 
 
-schedule = [{"desc": "r_1", "time": "19:16:00", "state": "ready", "url": 'http://hive.product.in.ua/music/reklama_1.mp3'},
-            {"desc": "r_2", "time": "19:18:00", "state": "ready", "url": 'http://hive.product.in.ua/music/reklama_2.mp3'}]
+schedule = [{"desc": "r_1", "time": "19:22:00", "state": "ready", "url": 'http://hive.product.in.ua/music/reklama_1.mp3'},
+            {"desc": "r_2", "time": "19:24:00", "state": "ready", "url": 'http://hive.product.in.ua/music/reklama_2.mp3'}]
 
 p.play()    # start main stream
 
@@ -55,7 +55,7 @@ while True:
                     print("volume down")
                     p.audio_set_volume((10-x)*10)
                     time.sleep(1)
-                p.stop()    # stop main stream
+
                 p_r.play()  # start reklama
                 time.sleep(1)
                 print("reklama start!!!")
@@ -66,7 +66,7 @@ while True:
 
             if task["state"] == "playing" and not p_r.is_playing():
                     task["state"] = "old"
-                    p.play()
+                    # p.play()
                     for x in range(5, 11):
                         print("volume up")
                         p.audio_set_volume(x * 10)
