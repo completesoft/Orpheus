@@ -14,7 +14,8 @@ URL = "http://hive.product.in.ua:8885/api"
 # URL = "http://localhost:8885/api"
 
 # Quantity of loops main "While"-cycle
-PERIOD_UPDATE = 10
+CYCLE_DELAY_SEC = 1
+PERIOD_UPDATE = 5
 
 
 def req_schedule():
@@ -71,7 +72,7 @@ sleep_flag = False
 
 while True:
     # for something
-    time.sleep(1)
+    time.sleep(CYCLE_DELAY_SEC)
 
     counter_update += 1
     if DEBUG:
@@ -111,18 +112,24 @@ while True:
         counter_update = 0
 
     # ####Check in "Silent"-zone
+
     for silent in schedule["silent"]:
+        if DEBUG:
+            print("CHECK silent: "+silent["description"])
+        sleep_flag = False
         if silent["time_start"] <= current_time() <= silent["time_end"]:
-            if not sleep_flag:
+            if DEBUG:
+                print("SILENT: " + silent["description"]+" in RANGE")
+            sleep_flag = True
+            if p_main.is_playing():     # sleep
                 fade_out(p_main)
                 p_main.stop()
-                sleep_flag = True
             break
-        else:
-            if sleep_flag:
-                p_main.play()
-                fade_in(p_main)
-                sleep_flag = False
+
+    if not sleep_flag and not p_main.is_playing():  # wake up
+        p_main.play()
+        fade_in(p_main)
+        sleep_flag = False
 
     if sleep_flag:
         continue
