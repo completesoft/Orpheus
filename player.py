@@ -8,8 +8,8 @@ ALIVE_DELAY_SEC = 1
 NETWORK_CACHE_MS = 3000
 VERBOSE_LEVEL = 0
 TIME_FORMAT = "%H:%M:%S"
-# URL = "http://hive.product.in.ua:8885/api"
-URL = "http://localhost:8885/api"
+URL = "http://hive.product.in.ua:8885/api"
+# URL = "http://localhost:8885/api"
 
 # Quantity of loops main "While"-cycle
 PERIOD_UPDATE = 30
