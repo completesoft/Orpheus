@@ -93,3 +93,6 @@ ENV/
 
 #configs
 *config*.json
+
+!python-3*/
+!plugins/
