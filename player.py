@@ -3,24 +3,28 @@ import datetime
 import time
 import requests
 import copy
+import json
 
-
+VERSION = 2017030301
 ALIVE_DELAY_SEC = 1
 NETWORK_CACHE_MS = 3000
 VERBOSE_LEVEL = 0
 DEBUG = True
+FILE_LAST_SCHEDULE = "last_schedule.json"
 TIME_FORMAT = "%H:%M:%S"
 URL = "http://hive.product.in.ua:8885/api"
 # URL = "http://localhost:8885/api"
 
 # Quantity of loops main "While"-cycle
-CYCLE_DELAY_SEC = 1
-PERIOD_UPDATE = 5
+CYCLE_DELAY_SEC = 5
+PERIOD_UPDATE = 3
 
 
 def req_schedule():
     headers = {"content-type": "application/json"}
-    data = {"action": "get_schedule", "id": 1}
+    data = {"action": "get_schedule", "id": 1, "state": player_state}
+    if DEBUG:
+        print("REQUEST: "+str(data))
     p = requests.post(URL, headers=headers, json=data)
     return p.json()
 
@@ -48,8 +52,26 @@ def fade_in(player):
         time.sleep(1)
 
 
+def save_last_schedule(t_schedule):
+    with open(FILE_LAST_SCHEDULE, "w") as ls_file:
+        json.dump(t_schedule, ls_file, indent=4)
+
 # Receive schedule at the beginning
-schedule = req_schedule()
+
+player_state = "stop"   # для мониторинга на стороне сервера
+
+try:        # Пробуем загрузить расписание с сервера
+    schedule = req_schedule()
+except requests.exceptions.ConnectionError:     # Загружаем последнее сохраненное из файла
+    try:
+        with open(FILE_LAST_SCHEDULE) as ls_file:
+            schedule = json.load(ls_file)
+    except FileNotFoundError:
+        print("File {} not found. First run without api access.".format(FILE_LAST_SCHEDULE))
+        quit()
+else:
+    save_last_schedule(schedule)
+
 inserts_array = copy.deepcopy(schedule["inserts"])
 
 i = vlc.Instance('--verbose={0} --network-caching={1}'.format(VERBOSE_LEVEL, NETWORK_CACHE_MS).split())
@@ -70,9 +92,14 @@ p_main.play()
 counter_update = 0
 sleep_flag = False
 
+
 while True:
     # for something
     time.sleep(CYCLE_DELAY_SEC)
+    if p_main.is_playing():
+        player_state = "play"
+    else:
+        player_state = "stop"
 
     counter_update += 1
     if DEBUG:
@@ -96,6 +123,7 @@ while True:
 
                 schedule = new_schedule
                 inserts_array = copy.deepcopy(schedule["inserts"])
+                save_last_schedule(schedule)
 
             if DEBUG:
                 print(schedule)
@@ -121,12 +149,14 @@ while True:
             if DEBUG:
                 print("SILENT: " + silent["description"]+" in RANGE")
             sleep_flag = True
+            player_state = "silent"
             if p_main.is_playing():     # sleep
                 fade_out(p_main)
                 p_main.stop()
             break
 
     if not sleep_flag and not p_main.is_playing():  # wake up
+        player_state = "stop"
         p_main.play()
         fade_in(p_main)
         sleep_flag = False
