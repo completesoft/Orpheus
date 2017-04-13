@@ -92,7 +92,7 @@ ENV/
 .idea/
 
 #configs
-*config*.json
+#*config*.json
 
 !python-3*/*
 !plugins/*
