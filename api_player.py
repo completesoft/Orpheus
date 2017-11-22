@@ -110,6 +110,7 @@ class Player(object):
                     self.main_player.stop()
                 self.sleep_flag = True
                 self.sleep_time = datetime.datetime.combine(datetime.date.today(), silent['time_end'])
+                return True
         return False
 
     def keep_silent(self):
@@ -134,27 +135,26 @@ class Player(object):
     def run(self):
         while True:
             time.sleep(CYCLE_DELAY_SEC)
-            print(0)
+            print("run")
             if self.is_change_sch():
-                print(1)
+                print("is_change_sch()")
                 self.format_raw_schedule()
                 self.set_schedule()
             if self.keep_silent():
-                print(2)
+                print("keep_silent()")
                 continue
             if self.get_adv_player():
-                print(3)
+                print("get_adv_player()")
                 self.fade_out_main_player()
                 self.main_player.pause()
                 self.run_adv_player()
                 self.run_main_player()
             if self.get_silent():
-                print(4)
+                print("get_silent()")
                 continue
             self.run_main_player()
-            print(5)
-
-
+            print("run_main_player()")
+            
 player = Player()
 
 if __name__ == '__main__':
