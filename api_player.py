@@ -5,20 +5,24 @@ import requests
 import copy
 import json
 
+# In URL - "localhost:8000" change to your DEPLOY server URL
+########
+URL = "http://localhost:8000/api/1/"
+########
+
+
+### ADV_DELAY Must be grater when CYCLE_DELAY_SEC
+ADV_DELAY = datetime.timedelta(seconds=10)
+#
 CYCLE_DELAY_SEC = 5
-ALIVE_DELAY_SEC = 1
+###
 NETWORK_CACHE_MS = 3000
 VERBOSE_LEVEL = 2
 DEBUG = True
 FILE_LAST_SCHEDULE = 'last_schedule.json'
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TIME_FORMAT = '%H:%M:%S'
-URL = "http://localhost:8000/api/1/"
-ADV_DELAY = datetime.timedelta(seconds=10)
 MAIN_PLAYER_MIN_VOLUME = 10
-
-# Quantity of loops main "While"-cycle
-PERIOD_UPDATE = 3
 
 
 class Player(object):
@@ -34,10 +38,40 @@ class Player(object):
         self.sleep_time = None
 
     def is_change_sch(self):
-        self.request_schedule()
-        if self.current_schedule:
+        if self.current_schedule is None:
+            sch = self.get_local_schedule()
+            if sch is not None:
+                self.raw_schedule = sch
+                self.format_raw_schedule()
+                self.set_schedule()
+            self.request_schedule()
+            return self.compare()
+        else:
+            self.request_schedule()
+            return self.compare()
+
+    def compare(self):
+        if self.current_schedule is None and self.raw_schedule is not None:
+            return True
+        if self.current_schedule is not None and self.raw_schedule is None:
+            return False
+        if self.current_schedule is not None and self.raw_schedule is not None:
             return self.is_new_schedule()
-        return True
+        return False
+
+    def get_local_schedule(self):
+        print('GET local')
+        try:
+            with open(FILE_LAST_SCHEDULE) as file:
+                schedule = json.load(file)
+        except (FileExistsError, FileNotFoundError) as error:
+            print(error)
+            return None
+        return schedule
+
+    def save_schedule(self):
+        with open(FILE_LAST_SCHEDULE, "w") as file:
+            json.dump(self.raw_schedule, file, indent=4)
 
     def set_schedule(self):
         self.main_player_change = True
@@ -47,7 +81,11 @@ class Player(object):
         self.raw_schedule = None
 
     def request_schedule(self):
-        raw_schedule = requests.get(URL)
+        try:
+            raw_schedule = requests.get(URL)
+        except requests.exceptions.ConnectionError as error:
+            print(error)
+            return None
         self.raw_schedule = raw_schedule.json()
 
     def is_new_schedule(self):
@@ -121,7 +159,8 @@ class Player(object):
         return self.sleep_flag
 
     def run_main_player(self):
-        if self.main_player_change:
+        state = str(self.main_player.get_state())
+        if self.main_player_change or state in ('State.Ended', 'State.Error'):
             if self.main_player.is_playing():
                 self.fade_out_main_player()
                 self.main_player.stop()
@@ -138,8 +177,11 @@ class Player(object):
             print("run")
             if self.is_change_sch():
                 print("is_change_sch()")
+                self.save_schedule()
                 self.format_raw_schedule()
                 self.set_schedule()
+            if self.current_schedule is None:
+                continue
             if self.keep_silent():
                 print("keep_silent()")
                 continue
