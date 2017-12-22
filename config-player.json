@@ -1,0 +1,5 @@
+{
+    "url_api_server": "http://localhost:8000/api/",
+    "player_id": "pl_01",
+    "secret": "abcd"
+}
